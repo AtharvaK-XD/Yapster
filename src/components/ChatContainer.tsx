@@ -6,12 +6,16 @@ import {
   Chat,
   Channel,
   ChannelList,
-  ChannelHeader,
   MessageList,
   MessageComposer,
   Window,
   Thread,
   useChatContext,
+  useMessageContext,
+  useContextMenuContext,
+  MessageActions,
+  defaultMessageActionSet,
+  WithComponents,
 } from 'stream-chat-react';
 
 import 'stream-chat-react/dist/css/index.css';
@@ -24,6 +28,50 @@ interface ChatContainerProps {
   onLogout: () => void;
 }
 
+// ----------------------------------------------------
+// CUSTOM MESSAGE ACTIONS: "MESSAGE INFO" DECORATOR
+// ----------------------------------------------------
+const MessageInfoAction = (props: any) => {
+  const { message } = useMessageContext('MessageInfoAction');
+  const { client } = useChatContext();
+  const { closeMenu } = useContextMenuContext();
+
+  const isMyMessage = message.user?.id === client.userID;
+
+  if (!isMyMessage) return null;
+
+  return (
+    <button
+      {...props}
+      className="str-chat__message-actions-list-item-button"
+      onClick={() => {
+        if ((window as any).triggerMessageInfoModal) {
+          (window as any).triggerMessageInfoModal(message);
+        }
+        closeMenu();
+      }}
+    >
+      Message Info
+    </button>
+  );
+};
+
+const CustomMessageActions = (props: any) => {
+  return (
+    <MessageActions
+      {...props}
+      messageActionSet={[
+        ...defaultMessageActionSet,
+        {
+          Component: MessageInfoAction,
+          placement: 'dropdown',
+          type: 'message-info',
+        },
+      ]}
+    />
+  );
+};
+
 export default function ChatContainer({
   userId,
   userName,
@@ -32,40 +80,55 @@ export default function ChatContainer({
   onLogout,
 }: ChatContainerProps) {
   const [chatClient, setChatClient] = useState<StreamChat | null>(null);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newChannelName, setNewChannelName] = useState('');
-  const [isCreating, setIsCreating] = useState(false);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
 
   useEffect(() => {
     const client = StreamChat.getInstance(apiKey);
     let isSubscribed = true;
 
+    // If client is already connected to this user, skip connection
+    if (client.userID === userId) {
+      if (isSubscribed) {
+        setChatClient(client);
+      }
+      return;
+    }
+
     const initChat = async () => {
       try {
+        const savedPicture = localStorage.getItem('yapster-user-picture');
+
+        // Connect the user to Stream Chat
         await client.connectUser(
           {
             id: userId,
             name: userName,
-            image: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(userId)}`,
+            image: savedPicture || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(userId)}`,
           },
           token
         );
 
         if (!isSubscribed) return;
 
-        const generalChannel = client.channel('messaging', 'general-chat', {
-          name: 'General Lounge 💬',
-          created_by_id: userId,
+        // Auto-create/join a default public lobby room so users aren't left stranded on first launch
+        const lobbyChannel = client.channel('messaging', 'yap-lobby', {
+          name: 'Public Lobby 🚀',
+          room_code: 'YAP-LOBBY',
         } as any);
 
-        await generalChannel.create();
-        await generalChannel.addMembers([userId]);
+        await lobbyChannel.create();
+        await lobbyChannel.addMembers([userId]);
 
         if (isSubscribed) {
           setChatClient(client);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error connecting to Stream Chat:', error);
+        if (isSubscribed) {
+          setConnectionError(
+            error.message || 'Failed to authenticate. Please check your internet connection or Stream credentials.'
+          );
+        }
       }
     };
 
@@ -73,41 +136,38 @@ export default function ChatContainer({
 
     return () => {
       isSubscribed = false;
-      setChatClient(null);
-      client.disconnectUser().then(() => {
-        console.log('Stream Chat disconnected');
-      });
     };
   }, [userId, userName, token, apiKey]);
 
-  const handleCreateChannel = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!chatClient || !newChannelName.trim() || isCreating) return;
-
-    setIsCreating(true);
+  const handleLogout = async () => {
     try {
-      const channelId = newChannelName
-        .toLowerCase()
-        .replace(/[^a-z0-9-_]/g, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '') + '-' + Math.floor(1000 + Math.random() * 9000);
-
-      const channel = chatClient.channel('messaging', channelId, {
-        name: newChannelName.trim(),
-        created_by_id: userId,
-        members: [userId],
-      } as any);
-
-      await channel.create();
-      setNewChannelName('');
-      setShowCreateModal(false);
+      const client = StreamChat.getInstance(apiKey);
+      await client.disconnectUser();
+      console.log('Stream Chat disconnected successfully.');
     } catch (error) {
-      console.error('Error creating channel:', error);
-      alert('Failed to create channel');
-    } finally {
-      setIsCreating(false);
+      console.error('Error disconnecting on logout:', error);
     }
+    onLogout();
   };
+
+  if (connectionError) {
+    return (
+      <div className="error-screen">
+        <div className="error-card">
+          <h2>⚠️ Connection Failed</h2>
+          <p>{connectionError}</p>
+          <div className="error-actions">
+            <button className="btn-retry" onClick={() => window.location.reload()}>
+              Retry Connection
+            </button>
+            <button className="btn-secondary" onClick={handleLogout}>
+              Logout
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!chatClient) {
     return (
@@ -120,66 +180,130 @@ export default function ChatContainer({
 
   return (
     <Chat client={chatClient} theme="str-chat__theme-dark">
-      <ChatLayout 
-        onLogout={onLogout} 
-        onCreateChannelClick={() => setShowCreateModal(true)} 
-      />
-
-      {/* Create Channel Modal */}
-      {showCreateModal && (
-        <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2>Create a New Channel</h2>
-            <form onSubmit={handleCreateChannel}>
-              <div className="form-group">
-                <label htmlFor="channelName">Channel Name</label>
-                <input
-                  type="text"
-                  id="channelName"
-                  value={newChannelName}
-                  onChange={(e) => setNewChannelName(e.target.value)}
-                  placeholder="e.g. general-chat, design-team"
-                  maxLength={30}
-                  required
-                  autoFocus
-                />
-              </div>
-              <div className="modal-actions">
-                <button 
-                  type="button" 
-                  className="btn-secondary" 
-                  onClick={() => setShowCreateModal(false)}
-                  disabled={isCreating}
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit" 
-                  className="btn-primary" 
-                  disabled={isCreating || !newChannelName.trim()}
-                >
-                  {isCreating ? 'Creating...' : 'Create'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <ChatLayout onLogout={handleLogout} userId={userId} />
     </Chat>
   );
 }
 
-function ChatLayout({ 
-  onLogout, 
-  onCreateChannelClick 
-}: { 
-  onLogout: () => void; 
-  onCreateChannelClick: () => void;
-}) {
+function ChatLayout({ onLogout, userId }: { onLogout: () => void; userId: string }) {
   const { client, channel, setActiveChannel } = useChatContext();
+
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showJoinModal, setShowJoinModal] = useState(false);
+  const [showMembersList, setShowMembersList] = useState(false);
+  const [infoMessage, setInfoMessage] = useState<any | null>(null);
+  
+  const [newRoomName, setNewRoomName] = useState('');
+  const [joinRoomCode, setJoinRoomCode] = useState('');
+  
+  const [isCreating, setIsCreating] = useState(false);
+  const [isJoining, setIsJoining] = useState(false);
+
+  // Global callback bridge for Message Info Action
+  useEffect(() => {
+    (window as any).triggerMessageInfoModal = (message: any) => {
+      setInfoMessage(message);
+    };
+    return () => {
+      (window as any).triggerMessageInfoModal = undefined;
+    };
+  }, []);
 
   const handleBackToList = () => {
     setActiveChannel(undefined);
+  };
+
+  const generateRoomCode = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = 'YAP-';
+    for (let i = 0; i < 4; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+  };
+
+  const handleCreateRoom = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newRoomName.trim() || isCreating) return;
+
+    setIsCreating(true);
+    try {
+      const roomCode = generateRoomCode();
+      const channelId = roomCode.toLowerCase();
+
+      const newChannel = client.channel('messaging', channelId, {
+        name: newRoomName.trim(),
+        room_code: roomCode,
+        created_by_id: userId,
+        members: [userId],
+      } as any);
+
+      await newChannel.create();
+      await newChannel.addMembers([userId]);
+      
+      setNewRoomName('');
+      setShowCreateModal(false);
+      setActiveChannel(newChannel);
+    } catch (error) {
+      console.error('Error creating room:', error);
+      alert('Failed to create room.');
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleJoinRoom = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const formattedCode = joinRoomCode.trim().toUpperCase();
+    
+    if (!formattedCode || isJoining) return;
+
+    setIsJoining(true);
+    try {
+      if (formattedCode !== 'YAP-LOBBY' && (!formattedCode.startsWith('YAP-') || formattedCode.length !== 8)) {
+        alert('Invalid room code format. Code must be like YAP-XXXX');
+        setIsJoining(false);
+        return;
+      }
+
+      const channelId = formattedCode.toLowerCase();
+      const targetChannel = client.channel('messaging', channelId);
+
+      await targetChannel.watch();
+      await targetChannel.addMembers([userId]);
+
+      setJoinRoomCode('');
+      setShowJoinModal(false);
+      setActiveChannel(targetChannel);
+    } catch (error) {
+      console.error('Error joining room:', error);
+      alert('Room not found. Please verify the code and try again.');
+    } finally {
+      setIsJoining(false);
+    }
+  };
+
+  const handleCopyCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    alert(`Room code "${code}" copied to clipboard! Share it with friends.`);
+  };
+
+  // Get users who read the message (read_timestamp >= message_timestamp)
+  const getReaders = (msg: any) => {
+    if (!channel || !msg) return [];
+    
+    const readStates = channel.state.read;
+    return Object.values(readStates)
+      .filter((state: any) => {
+        // Exclude the sender
+        if (state.user.id === msg.user.id) return false;
+        
+        const lastRead = new Date(state.last_read).getTime();
+        const msgTime = new Date(msg.created_at).getTime();
+        
+        return lastRead >= msgTime;
+      })
+      .map((state: any) => state.user);
   };
 
   const hasActiveChannel = !!channel;
@@ -190,17 +314,9 @@ function ChatLayout({
       <aside className="yapster-sidebar">
         <div className="yapster-sidebar-header">
           <div className="logo-section">
-            <span className="logo-icon">🚀</span>
+            <img src="/logo.png" alt="Yapster Logo" style={{ width: '22px', height: '22px', objectFit: 'contain' }} />
             <h1>Yapster</h1>
           </div>
-          
-          <button 
-            className="btn-create-channel" 
-            onClick={onCreateChannelClick}
-            title="Create new channel"
-          >
-            ＋
-          </button>
         </div>
 
         <div className="current-user-badge">
@@ -218,36 +334,239 @@ function ChatLayout({
           </button>
         </div>
 
+        <div className="rooms-actions-panel">
+          <button className="btn-action-room create" onClick={() => setShowCreateModal(true)}>
+            <span>➕</span> Create Room
+          </button>
+          <button className="btn-action-room join" onClick={() => setShowJoinModal(true)}>
+            <span>🔑</span> Join Room
+          </button>
+        </div>
+
+        <div className="channel-list-title">Your Active Rooms</div>
         <div className="channel-list-container">
           <ChannelList
             filters={{ members: { $in: [client.userID || ''] } }}
             sort={{ last_message_at: -1 }}
-            options={{ limit: 10 }}
-            showChannelSearch
+            options={{ limit: 15 }}
+            showChannelSearch={false}
           />
         </div>
       </aside>
 
       {/* Right Chat Main Pane */}
       <main className="yapster-chat-main">
-        <Channel>
-          <Window>
-            <div className="chat-window-header-wrapper">
-              <button 
-                className="btn-back-to-list" 
-                onClick={handleBackToList} 
-                title="Back to Channels"
-              >
-                ←
-              </button>
-              <ChannelHeader />
+        {hasActiveChannel ? (
+          <div className="yapster-chat-viewport">
+            <WithComponents overrides={{ MessageActions: CustomMessageActions }}>
+              <Channel>
+                <Window>
+                <div className="chat-window-header-wrapper">
+                  <button 
+                    className="btn-back-to-list" 
+                    onClick={handleBackToList} 
+                    title="Back to Channels"
+                  >
+                    ←
+                  </button>
+                  <div className="custom-channel-header-info">
+                    <h3>{(channel.data as any)?.name || 'Chat Room'}</h3>
+                    <span 
+                      className="room-code-badge" 
+                      onClick={() => handleCopyCode((channel.data as any)?.room_code || channel.id?.toUpperCase() || '')}
+                      title="Click to copy room code"
+                    >
+                      Code: {(channel.data as any)?.room_code || channel.id?.toUpperCase() || ''} 📋
+                    </span>
+                  </div>
+                  <button 
+                    className={`btn-toggle-members ${showMembersList ? 'active' : ''}`}
+                    onClick={() => setShowMembersList(!showMembersList)}
+                    title="View members in group"
+                  >
+                    👥 {Object.keys(channel.state.members).length}
+                  </button>
+                </div>
+                <div className="chat-content-pane">
+                  <div className="chat-messages-area">
+                    <MessageList />
+                    <MessageComposer />
+                  </div>
+                  
+                  {/* Toggleable Group Members sidebar */}
+                  {showMembersList && (
+                    <aside className="yapster-members-sidebar">
+                      <div className="members-sidebar-header">
+                        <h4>Group Members</h4>
+                        <button className="btn-close-members" onClick={() => setShowMembersList(false)}>×</button>
+                      </div>
+                      <div className="members-list">
+                        {Object.values(channel.state.members).map((member: any) => {
+                          const isOwner = member.user.id === (channel.data as any)?.created_by_id;
+                          return (
+                            <div key={member.user.id} className="member-item">
+                              <img 
+                                src={member.user.image || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(member.user.id)}`} 
+                                alt={member.user.name} 
+                                className="member-avatar"
+                              />
+                              <div className="member-info">
+                                <span className="member-name">{member.user.name || member.user.id}</span>
+                                {isOwner ? (
+                                  <span className="badge-admin">Admin</span>
+                                ) : (
+                                  <span className="badge-member">Member</span>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </aside>
+                  )}
+                </div>
+              </Window>
+              <Thread />
+            </Channel>
+          </WithComponents>
+        </div>
+        ) : (
+          <div className="no-active-chat-screen">
+            <div className="no-chat-prompt">
+              <h2>Select a Room to Start Yapping</h2>
+              <p>Create a new chat room or join an existing one using a code from your friends.</p>
+              <div className="no-chat-actions">
+                <button className="btn-primary" onClick={() => setShowCreateModal(true)}>Create Room</button>
+                <button className="btn-secondary" onClick={() => setShowJoinModal(true)}>Join Room</button>
+              </div>
             </div>
-            <MessageList />
-            <MessageComposer />
-          </Window>
-          <Thread />
-        </Channel>
+          </div>
+        )}
       </main>
+
+      {/* Create Room Modal */}
+      {showCreateModal && (
+        <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2>Create a New Room</h2>
+            <form onSubmit={handleCreateRoom}>
+              <div className="form-group">
+                <label htmlFor="roomName">Room Name</label>
+                <input
+                  type="text"
+                  id="roomName"
+                  value={newRoomName}
+                  onChange={(e) => setNewRoomName(e.target.value)}
+                  placeholder="e.g. Secret Hangout, Dev Lounge"
+                  maxLength={30}
+                  required
+                  autoFocus
+                />
+              </div>
+              <div className="modal-actions">
+                <button 
+                  type="button" 
+                  className="btn-secondary" 
+                  onClick={() => setShowCreateModal(false)}
+                  disabled={isCreating}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn-primary" 
+                  disabled={isCreating || !newRoomName.trim()}
+                >
+                  {isCreating ? 'Creating...' : 'Create'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Join Room Modal */}
+      {showJoinModal && (
+        <div className="modal-overlay" onClick={() => setShowJoinModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2>Join a Room</h2>
+            <form onSubmit={handleJoinRoom}>
+              <div className="form-group">
+                <label htmlFor="roomCode">Room Code</label>
+                <input
+                  type="text"
+                  id="roomCode"
+                  value={joinRoomCode}
+                  onChange={(e) => setJoinRoomCode(e.target.value)}
+                  placeholder="e.g. YAP-H7K9"
+                  maxLength={15}
+                  required
+                  autoFocus
+                />
+                <span className="field-hint">Ask your friend for the code (format: YAP-XXXX).</span>
+              </div>
+              <div className="modal-actions">
+                <button 
+                  type="button" 
+                  className="btn-secondary" 
+                  onClick={() => setShowJoinModal(false)}
+                  disabled={isJoining}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn-primary" 
+                  disabled={isJoining || !joinRoomCode.trim()}
+                >
+                  {isJoining ? 'Joining...' : 'Join'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Message Read Info Modal */}
+      {infoMessage && (
+        <div className="modal-overlay" onClick={() => setInfoMessage(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2>Message Info</h2>
+            <div className="message-preview-box">
+              <p className="message-preview-text">{infoMessage.text}</p>
+              <span className="message-preview-time">
+                Sent at {new Date(infoMessage.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </span>
+            </div>
+            
+            <div className="readers-section">
+              <h3>Seen By</h3>
+              {getReaders(infoMessage).length === 0 ? (
+                <p className="no-readers">No one has seen this message yet.</p>
+              ) : (
+                <div className="readers-list">
+                  {getReaders(infoMessage).map((user: any) => (
+                    <div key={user.id} className="reader-item">
+                      <img 
+                        src={user.image || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(user.id)}`} 
+                        alt={user.name} 
+                        className="reader-avatar"
+                      />
+                      <span className="reader-name">{user.name || user.id}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="modal-actions">
+              <button className="btn-primary" onClick={() => setInfoMessage(null)}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
