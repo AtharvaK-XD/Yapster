@@ -273,17 +273,31 @@ function ChatLayout({ onLogout, userId }: { onLogout: () => void; userId: string
       }
 
       const channelId = formattedCode.toLowerCase();
-      const targetChannel = client.channel('messaging', channelId);
+      
+      // 1. Call server-side API to add the user to the channel members list
+      const joinResponse = await fetch('/api/join-room', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId, roomCode: formattedCode }),
+      });
 
+      if (!joinResponse.ok) {
+        const errorData = await joinResponse.json();
+        throw new Error(errorData.error || 'Failed to join room');
+      }
+
+      // 2. Initialize and watch the channel client-side now that the user is a member
+      const targetChannel = client.channel('messaging', channelId);
       await targetChannel.watch();
-      await targetChannel.addMembers([userId]);
 
       setJoinRoomCode('');
       setShowJoinModal(false);
       setActiveChannel(targetChannel);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error joining room:', error);
-      alert('Room not found. Please verify the code and try again.');
+      alert(error.message || 'Room not found. Please verify the code and try again.');
     } finally {
       setIsJoining(false);
     }
