@@ -1294,6 +1294,40 @@ button:active,
   --str-chat__border-radius-large: 12px !important;
 }
 
+/* Force thin custom scrollbar on channel lists */
+.channel-list-container,
+.str-chat-channel-list,
+.str-chat__channel-list-messenger {
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(99, 102, 241, 0.15) transparent !important;
+}
+
+.channel-list-container::-webkit-scrollbar,
+.str-chat-channel-list::-webkit-scrollbar,
+.str-chat__channel-list-messenger::-webkit-scrollbar {
+  width: 4px !important;
+  height: 4px !important;
+}
+
+.channel-list-container::-webkit-scrollbar-track,
+.str-chat-channel-list::-webkit-scrollbar-track,
+.str-chat__channel-list-messenger::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+.channel-list-container::-webkit-scrollbar-thumb,
+.str-chat-channel-list::-webkit-scrollbar-thumb,
+.str-chat__channel-list-messenger::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.15) !important;
+  border-radius: 99px !important;
+}
+
+.channel-list-container::-webkit-scrollbar-thumb:hover,
+.str-chat-channel-list::-webkit-scrollbar-thumb:hover,
+.str-chat__channel-list-messenger::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.35) !important;
+}
+
 .str-chat-channel-list {
   background-color: transparent !important;
 }
@@ -1307,25 +1341,31 @@ button:active,
   background: transparent !important;
 }
 
+/* Floating Card style for Channel previews */
 .str-chat__channel-preview-messenger {
-  border-radius: 8px !important;
-  margin-bottom: 3px !important;
-  border: none !important;
-  padding: 10px 12px !important;
-  transition: background-color 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  border-radius: 12px !important;
+  margin: 6px 12px !important;
+  border: 1px solid rgba(255, 255, 255, 0.03) !important;
+  padding: 12px 14px !important;
+  background-color: rgba(255, 255, 255, 0.01) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  border-bottom: none !important;
 }
 
 .str-chat__channel-preview-messenger--active {
   background-color: rgba(99, 102, 241, 0.08) !important;
+  border-color: rgba(99, 102, 241, 0.35) !important;
   position: relative;
-  box-shadow: inset 1px 0 0 rgba(99, 102, 241, 0.2), 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+  transform: translateZ(5px) scale(1.02) !important;
 }
 
 /* Animate custom left active indicator line */
 .str-chat__channel-preview-messenger--active::before {
   content: '';
   position: absolute;
-  left: 0;
+  left: 6px;
   top: 15%;
   height: 70%;
   width: 3px;
@@ -1341,8 +1381,26 @@ button:active,
 }
 
 .str-chat__channel-preview-messenger:hover:not(.str-chat__channel-preview-messenger--active) {
-  background-color: rgba(255, 255, 255, 0.025) !important;
-  transform: translateX(4px) scale(1.01) !important;
+  background-color: rgba(255, 255, 255, 0.035) !important;
+  border-color: rgba(99, 102, 241, 0.2) !important;
+  transform: translateY(-2px) scale(1.02) !important;
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.06) !important;
+}
+
+/* Sidebar Channel Avatar 3D pop */
+.str-chat__channel-preview-messenger .str-chat__avatar {
+  border-radius: 50% !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3), 0 0 0 2px rgba(255, 255, 255, 0.04);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.str-chat__channel-preview-messenger:hover .str-chat__avatar {
+  transform: scale(1.06) rotate(-3deg);
+  box-shadow: 0 6px 15px rgba(99, 102, 241, 0.2), 0 0 0 2px rgba(99, 102, 241, 0.3);
+}
+
+.str-chat__channel-preview-messenger--active .str-chat__avatar {
+  box-shadow: 0 6px 15px rgba(99, 102, 241, 0.2), 0 0 0 2px rgba(99, 102, 241, 0.4);
 }
 
 /* Smooth Springy Slide-up Fade-in Animation for Messages */
