@@ -1328,6 +1328,24 @@ button:active,
   background: rgba(99, 102, 241, 0.35) !important;
 }
 
+/* Remove all background and borders from the parent channel list containers */
+.str-chat__channel-list,
+.str-chat__channel-list-inner,
+.str-chat__channel-list-inner__main,
+.str-chat-channel-list {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.str-chat__channel-list__header {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
 .str-chat-channel-list {
   background-color: transparent !important;
 }
@@ -1341,45 +1359,29 @@ button:active,
   background: transparent !important;
 }
 
-/* Floating Card style for Channel previews */
+/* Floating Card style for Channel previews & list items */
+.str-chat__channel-list-item,
 .str-chat__channel-preview-messenger {
   border-radius: 12px !important;
   margin: 6px 12px !important;
   border: 1px solid rgba(255, 255, 255, 0.03) !important;
   padding: 12px 14px !important;
   background-color: rgba(255, 255, 255, 0.01) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
   border-bottom: none !important;
+  position: relative !important;
 }
 
-.str-chat__channel-preview-messenger--active {
-  background-color: rgba(99, 102, 241, 0.08) !important;
-  border-color: rgba(99, 102, 241, 0.35) !important;
-  position: relative;
-  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
-  transform: translateZ(5px) scale(1.02) !important;
+.str-chat__channel-list-item::after,
+.str-chat__channel-list-item::before,
+.str-chat__channel-preview-messenger::after,
+.str-chat__channel-preview-messenger::before {
+  display: none !important; /* Hide defaults and dividers */
 }
 
-/* Animate custom left active indicator line */
-.str-chat__channel-preview-messenger--active::before {
-  content: '';
-  position: absolute;
-  left: 6px;
-  top: 15%;
-  height: 70%;
-  width: 3px;
-  background-color: var(--brand-primary);
-  border-radius: 99px;
-  box-shadow: 0 0 10px var(--brand-primary);
-  animation: border-grow 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes border-grow {
-  from { height: 0; top: 50%; }
-  to { height: 70%; top: 15%; }
-}
-
+/* Hover and active states for channel items */
+.str-chat__channel-list-item:not(:disabled):hover,
 .str-chat__channel-preview-messenger:hover:not(.str-chat__channel-preview-messenger--active) {
   background-color: rgba(255, 255, 255, 0.035) !important;
   border-color: rgba(99, 102, 241, 0.2) !important;
@@ -1387,20 +1389,57 @@ button:active,
   box-shadow: 0 8px 20px rgba(99, 102, 241, 0.06) !important;
 }
 
+.str-chat__channel-list-item[aria-pressed=true],
+.str-chat__channel-list-item--selected,
+.str-chat__channel-preview-messenger--active {
+  background-color: rgba(99, 102, 241, 0.08) !important;
+  border-color: rgba(99, 102, 241, 0.35) !important;
+  position: relative !important;
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+  transform: translateZ(5px) scale(1.02) !important;
+}
+
+/* Active indicator line on selected items */
+.str-chat__channel-list-item[aria-pressed=true]::before,
+.str-chat__channel-list-item--selected::before,
+.str-chat__channel-preview-messenger--active::before {
+  content: '' !important;
+  display: block !important;
+  position: absolute !important;
+  left: 6px !important;
+  top: 15% !important;
+  height: 70% !important;
+  width: 3px !important;
+  background-color: var(--brand-primary) !important;
+  border-radius: 99px !important;
+  box-shadow: 0 0 10px var(--brand-primary) !important;
+  animation: border-grow 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+  z-index: 5 !important;
+}
+
+@keyframes border-grow {
+  from { height: 0; top: 50%; }
+  to { height: 70%; top: 15%; }
+}
+
 /* Sidebar Channel Avatar 3D pop */
+.str-chat__channel-list-item .str-chat__avatar,
 .str-chat__channel-preview-messenger .str-chat__avatar {
   border-radius: 50% !important;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3), 0 0 0 2px rgba(255, 255, 255, 0.04);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3), 0 0 0 2px rgba(255, 255, 255, 0.04) !important;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
+.str-chat__channel-list-item:hover .str-chat__avatar,
 .str-chat__channel-preview-messenger:hover .str-chat__avatar {
-  transform: scale(1.06) rotate(-3deg);
-  box-shadow: 0 6px 15px rgba(99, 102, 241, 0.2), 0 0 0 2px rgba(99, 102, 241, 0.3);
+  transform: scale(1.06) rotate(-3deg) !important;
+  box-shadow: 0 6px 15px rgba(99, 102, 241, 0.2), 0 0 0 2px rgba(99, 102, 241, 0.3) !important;
 }
 
+.str-chat__channel-list-item[aria-pressed=true] .str-chat__avatar,
+.str-chat__channel-list-item--selected .str-chat__avatar,
 .str-chat__channel-preview-messenger--active .str-chat__avatar {
-  box-shadow: 0 6px 15px rgba(99, 102, 241, 0.2), 0 0 0 2px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 6px 15px rgba(99, 102, 241, 0.2), 0 0 0 2px rgba(99, 102, 241, 0.4) !important;
 }
 
 /* Smooth Springy Slide-up Fade-in Animation for Messages */
