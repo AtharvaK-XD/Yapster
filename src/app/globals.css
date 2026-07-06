@@ -1400,16 +1400,23 @@ button:active,
   border-color: rgba(255, 255, 255, 0.12) !important;
 }
 
-.str-chat__message-input {
+.str-chat__message-input,
+.str-chat .str-chat__message-composer-container {
+  background: transparent !important;
   background-color: transparent !important;
-  border-top: 1px solid var(--border) !important;
+  border: none !important;
+  border-top: none !important;
+  box-shadow: none !important;
   padding: 16px 20px !important;
 }
 
 /* Outer layout wrapper of the composer */
 .str-chat .str-chat__message-composer {
   background: transparent !important;
+  background-color: transparent !important;
   border: none !important;
+  border-top: none !important;
+  box-shadow: none !important;
   display: flex !important;
   align-items: center !important;
   gap: 12px !important;
