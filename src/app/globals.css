@@ -1134,19 +1134,26 @@ button:active,
   }
 
   .chat-window-header-wrapper .btn-back-to-list {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    border: none;
-    color: var(--foreground);
-    font-size: 20px;
-    padding-right: 12px;
-    cursor: pointer;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+    color: var(--foreground) !important;
+    width: 34px !important;
+    height: 34px !important;
+    border-radius: 50% !important;
+    font-size: 16px !important;
+    padding: 0 !important;
+    margin-right: 10px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
   }
 
   .chat-window-header-wrapper .btn-back-to-list:hover {
-    color: var(--muted);
+    background: rgba(99, 102, 241, 0.12) !important;
+    border-color: rgba(99, 102, 241, 0.3) !important;
+    color: var(--brand-primary) !important;
   }
 
   .custom-channel-header-info {
@@ -1177,19 +1184,38 @@ button:active,
     padding: 8px 12px !important;
   }
 
-  /* Optimized Mobile Input area avoiding keyboard cut-offs */
-  .str-chat__message-input {
+  /* Optimized Mobile Input area avoiding keyboard cut-offs and maintaining the Dynamic Island shape */
+  .str-chat__message-input,
+  .str-chat .str-chat__message-composer-container {
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    border-top: none !important;
+    box-shadow: none !important;
     padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px)) !important;
-    background-color: var(--background) !important;
   }
 
-  .str-chat__message-composer {
-    padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px)) !important;
+  .str-chat .str-chat__message-composer {
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    gap: 8px !important;
   }
 
+  .str-chat .str-chat__message-composer-compose-area,
   .str-chat__message-input-form {
-    border-radius: 8px !important;
+    border-radius: 9999px !important;
     margin: 0 !important;
+    padding: 4px 14px !important;
+  }
+
+  /* Optimized Mobile Sidebar Card layouts */
+  .str-chat__channel-list-item,
+  .str-chat__channel-preview-messenger {
+    margin: 6px 10px !important;
+    padding: 10px 12px !important;
   }
   
   .yapster-members-sidebar {
