@@ -114,10 +114,16 @@ export default function ChatContainer({
         const lobbyChannel = client.channel('messaging', 'yap-lobby', {
           name: 'Public Lobby 🚀',
           room_code: 'YAP-LOBBY',
+          members: [userId],
         } as any);
 
-        await lobbyChannel.create();
-        await lobbyChannel.addMembers([userId]);
+        try {
+          await lobbyChannel.watch();
+        } catch (watchErr) {
+          console.warn('Lobby watch failed client-side, trying create:', watchErr);
+          await lobbyChannel.create();
+          await lobbyChannel.addMembers([userId]);
+        }
 
         if (isSubscribed) {
           setChatClient(client);

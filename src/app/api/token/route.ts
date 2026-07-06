@@ -22,6 +22,21 @@ export async function POST(request: Request) {
     // Initialize Stream Chat Server Client
     const serverClient = StreamChat.getInstance(apiKey, apiSecret);
 
+    // Upsert the user on the server side to ensure they exist
+    await serverClient.upsertUser({
+      id: userId,
+      role: 'user',
+    });
+
+    // Create the default lobby channel from the server side and add the user
+    const lobbyChannel = serverClient.channel('messaging', 'yap-lobby', {
+      name: 'Public Lobby 🚀',
+      room_code: 'YAP-LOBBY',
+      created_by_id: userId,
+    } as any);
+    await lobbyChannel.create();
+    await lobbyChannel.addMembers([userId]);
+
     // Generate token (expires in 24 hours)
     const token = serverClient.createToken(
       userId,
