@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ChatContainer from '@/components/ChatContainer';
+import { supabase } from '@/lib/supabase';
 
 export default function ChatPage() {
   const router = useRouter();
@@ -54,9 +55,15 @@ export default function ChatPage() {
     fetchToken();
   }, [router]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error('Error signing out from Supabase:', err);
+    }
     localStorage.removeItem('yapster-user-id');
     localStorage.removeItem('yapster-user-name');
+    localStorage.removeItem('yapster-user-picture');
     router.push('/');
   };
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Script from 'next/script';
+import { supabase } from '@/lib/supabase';
 
 export default function Login() {
   const router = useRouter();
@@ -10,100 +10,67 @@ export default function Login() {
   const [errorMessage, setErrorMessage] = useState('');
   const [isConfigured, setIsConfigured] = useState(true);
 
-  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-
   // Check if credentials are set
   useEffect(() => {
-    if (!clientId || clientId === 'your_google_client_id_here') {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!supabaseUrl || !supabaseAnonKey) {
       setIsConfigured(false);
     } else {
       setIsConfigured(true);
     }
-  }, [clientId]);
+  }, []);
 
-  // If already logged in, redirect to chat page
+  // Listen to auth state changes
   useEffect(() => {
-    const savedUserId = localStorage.getItem('yapster-user-id');
-    if (savedUserId) {
-      router.push('/chat');
-    }
-  }, [router]);
+    if (!isConfigured) return;
 
-  const handleCredentialResponse = async (response: any) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        setIsLoading(true);
+        try {
+          const user = session.user;
+          const googleUserId = user.id;
+          const googleName = user.user_metadata?.full_name || user.user_metadata?.name || 'User';
+          const googlePicture = user.user_metadata?.avatar_url || user.user_metadata?.picture || '';
+
+          const cleanUserId = `google-${googleUserId}`;
+
+          localStorage.setItem('yapster-user-id', cleanUserId);
+          localStorage.setItem('yapster-user-name', googleName);
+          localStorage.setItem('yapster-user-picture', googlePicture);
+          
+          router.push('/chat');
+        } catch (error: any) {
+          console.error('Error handling auth state change:', error);
+          setErrorMessage('Failed to sign in. Please try again.');
+          setIsLoading(false);
+        }
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [isConfigured, router]);
+
+  const handleGoogleSignIn = async () => {
     setIsLoading(true);
     setErrorMessage('');
     try {
-      const idToken = response.credential;
-      if (!idToken) throw new Error('No credential returned from Google');
-
-      // Decode the JWT token safely
-      const base64Url = idToken.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(
-        atob(base64)
-          .split('')
-          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-          .join('')
-      );
-      const decodedPayload = JSON.parse(jsonPayload);
-
-      const googleUserId = decodedPayload.sub;
-      const googleName = decodedPayload.name;
-      const googlePicture = decodedPayload.picture;
-
-      if (!googleUserId) {
-        throw new Error('Google User ID (sub) not found in token');
-      }
-
-      const cleanUserId = `google-${googleUserId}`;
-
-      localStorage.setItem('yapster-user-id', cleanUserId);
-      localStorage.setItem('yapster-user-name', googleName);
-      localStorage.setItem('yapster-user-picture', googlePicture || '');
-      
-      router.push('/chat');
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/`,
+        },
+      });
+      if (error) throw error;
     } catch (error: any) {
       console.error('Google Sign-in failed:', error);
       setErrorMessage(error.message || 'Google Sign-in failed. Please try again.');
       setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (!isConfigured) return;
-
-    const initGoogleSignIn = () => {
-      const g = (window as any).google;
-      if (g) {
-        g.accounts.id.initialize({
-          client_id: clientId,
-          callback: handleCredentialResponse,
-        });
-        g.accounts.id.renderButton(
-          document.getElementById('google-signin-btn'),
-          { 
-            theme: 'filled_blue', 
-            size: 'large', 
-            width: '320',
-            text: 'signin_with',
-            shape: 'pill'
-          }
-        );
-      }
-    };
-
-    if ((window as any).google) {
-      initGoogleSignIn();
-    } else {
-      const checkInterval = setInterval(() => {
-        if ((window as any).google) {
-          initGoogleSignIn();
-          clearInterval(checkInterval);
-        }
-      }, 100);
-      return () => clearInterval(checkInterval);
-    }
-  }, [isConfigured, clientId]);
 
   const handleMockLogin = () => {
     setIsLoading(true);
@@ -123,20 +90,13 @@ export default function Login() {
 
   return (
     <div className="login-container">
-      {isConfigured && (
-        <Script 
-          src="https://accounts.google.com/gsi/client" 
-          strategy="afterInteractive"
-        />
-      )}
-
       <div className="login-card">
         <div className="login-header">
           <div className="logo-badge">
             <img src="/logo.png" alt="Yapster Logo" style={{ width: '32px', height: '32px', objectFit: 'contain' }} />
           </div>
           <h1>Welcome to Yapster</h1>
-          <p>Real-time chat powered by Stream & Google</p>
+          <p>Real-time chat powered by Stream & Supabase</p>
         </div>
 
         {errorMessage && (
@@ -147,7 +107,19 @@ export default function Login() {
 
         <div className="login-oauth-section">
           {isConfigured ? (
-            <div id="google-signin-btn" className="google-btn-wrapper"></div>
+            <button 
+              onClick={handleGoogleSignIn} 
+              className="btn-google-login-custom"
+              disabled={isLoading}
+            >
+              <svg className="google-icon-svg" viewBox="0 0 24 24" width="18" height="18">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22c-.78-2.35-.78-4.7 0-7.05z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+              </svg>
+              <span>Sign in with Google</span>
+            </button>
           ) : (
             <button 
               onClick={handleMockLogin} 
@@ -160,7 +132,7 @@ export default function Login() {
                 <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22c-.78-2.35-.78-4.7 0-7.05z"/>
                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
               </svg>
-              <span>Sign in with Google</span>
+              <span>Sign in with Google (Mock)</span>
             </button>
           )}
           
