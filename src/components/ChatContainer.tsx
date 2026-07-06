@@ -96,7 +96,7 @@ export default function ChatContainer({
 
     const initChat = async () => {
       try {
-        const savedPicture = localStorage.getItem('yapster-user-picture');
+        const savedPicture = sessionStorage.getItem('yapster-user-picture');
 
         // Connect the user to Stream Chat
         await client.connectUser(

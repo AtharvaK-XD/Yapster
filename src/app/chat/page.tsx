@@ -15,8 +15,8 @@ export default function ChatPage() {
 
   useEffect(() => {
     // 1. Check local session
-    const savedUserId = localStorage.getItem('yapster-user-id');
-    const savedUserName = localStorage.getItem('yapster-user-name');
+    const savedUserId = sessionStorage.getItem('yapster-user-id');
+    const savedUserName = sessionStorage.getItem('yapster-user-name');
 
     if (!savedUserId || !savedUserName) {
       router.push('/');
@@ -61,9 +61,9 @@ export default function ChatPage() {
     } catch (err) {
       console.error('Error signing out from Supabase:', err);
     }
-    localStorage.removeItem('yapster-user-id');
-    localStorage.removeItem('yapster-user-name');
-    localStorage.removeItem('yapster-user-picture');
+    sessionStorage.removeItem('yapster-user-id');
+    sessionStorage.removeItem('yapster-user-name');
+    sessionStorage.removeItem('yapster-user-picture');
     router.push('/');
   };
 

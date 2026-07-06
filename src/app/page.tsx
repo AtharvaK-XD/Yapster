@@ -36,9 +36,9 @@ export default function Login() {
 
           const cleanUserId = `google-${googleUserId}`;
 
-          localStorage.setItem('yapster-user-id', cleanUserId);
-          localStorage.setItem('yapster-user-name', googleName);
-          localStorage.setItem('yapster-user-picture', googlePicture);
+          sessionStorage.setItem('yapster-user-id', cleanUserId);
+          sessionStorage.setItem('yapster-user-name', googleName);
+          sessionStorage.setItem('yapster-user-picture', googlePicture);
           
           router.push('/chat');
         } catch (error: any) {
@@ -80,9 +80,9 @@ export default function Login() {
       const mockName = `Developer Account #${mockId.slice(-3)}`;
       const mockPicture = `https://api.dicebear.com/7.x/pixel-art/svg?seed=${mockUserId}`;
 
-      localStorage.setItem('yapster-user-id', mockUserId);
-      localStorage.setItem('yapster-user-name', mockName);
-      localStorage.setItem('yapster-user-picture', mockPicture);
+      sessionStorage.setItem('yapster-user-id', mockUserId);
+      sessionStorage.setItem('yapster-user-name', mockName);
+      sessionStorage.setItem('yapster-user-picture', mockPicture);
       
       router.push('/chat');
     }, 600);
