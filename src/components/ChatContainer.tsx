@@ -220,22 +220,30 @@ function ChatLayout({ onLogout, userId }: { onLogout: () => void; userId: string
       const roomCode = generateRoomCode();
       const channelId = roomCode.toLowerCase();
 
-      const newChannel = client.channel('livestream', channelId, {
-        name: newRoomName.trim(),
-        room_code: roomCode,
-        created_by_id: userId,
-        members: [userId],
-      } as any);
+      // 1. Call server-side API to create the channel with admin credentials
+      const createResponse = await fetch('/api/create-room', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId, roomName: newRoomName.trim(), roomCode }),
+      });
 
-      await newChannel.create();
-      await newChannel.addMembers([userId]);
+      if (!createResponse.ok) {
+        const errorData = await createResponse.json();
+        throw new Error(errorData.error || 'Failed to create room');
+      }
+
+      // 2. Initialize and watch the channel client-side now that it has been created
+      const targetChannel = client.channel('livestream', channelId);
+      await targetChannel.watch();
       
       setNewRoomName('');
       setShowCreateModal(false);
-      setActiveChannel(newChannel);
-    } catch (error) {
+      setActiveChannel(targetChannel);
+    } catch (error: any) {
       console.error('Error creating room:', error);
-      alert('Failed to create room.');
+      alert(error.message || 'Failed to create room.');
     } finally {
       setIsCreating(false);
     }
