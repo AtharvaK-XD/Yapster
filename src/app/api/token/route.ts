@@ -27,16 +27,6 @@ export async function POST(request: Request) {
       id: userId,
       role: 'user',
     });
-
-    // Create the default lobby channel from the server side and add the user
-    const lobbyChannel = serverClient.channel('messaging', 'yap-lobby', {
-      name: 'Public Lobby 🚀',
-      room_code: 'YAP-LOBBY',
-      created_by_id: userId,
-    } as any);
-    await lobbyChannel.create();
-    await lobbyChannel.addMembers([userId]);
-
     // Generate token (expires in 24 hours)
     const token = serverClient.createToken(
       userId,

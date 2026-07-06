@@ -108,23 +108,6 @@ export default function ChatContainer({
           token
         );
 
-        if (!isSubscribed) return;
-
-        // Auto-create/join a default public lobby room so users aren't left stranded on first launch
-        const lobbyChannel = client.channel('messaging', 'yap-lobby', {
-          name: 'Public Lobby 🚀',
-          room_code: 'YAP-LOBBY',
-          members: [userId],
-        } as any);
-
-        try {
-          await lobbyChannel.watch();
-        } catch (watchErr) {
-          console.warn('Lobby watch failed client-side, trying create:', watchErr);
-          await lobbyChannel.create();
-          await lobbyChannel.addMembers([userId]);
-        }
-
         if (isSubscribed) {
           setChatClient(client);
         }
@@ -237,7 +220,7 @@ function ChatLayout({ onLogout, userId }: { onLogout: () => void; userId: string
       const roomCode = generateRoomCode();
       const channelId = roomCode.toLowerCase();
 
-      const newChannel = client.channel('messaging', channelId, {
+      const newChannel = client.channel('livestream', channelId, {
         name: newRoomName.trim(),
         room_code: roomCode,
         created_by_id: userId,
@@ -289,7 +272,7 @@ function ChatLayout({ onLogout, userId }: { onLogout: () => void; userId: string
       }
 
       // 2. Initialize and watch the channel client-side now that the user is a member
-      const targetChannel = client.channel('messaging', channelId);
+      const targetChannel = client.channel('livestream', channelId);
       await targetChannel.watch();
 
       setJoinRoomCode('');

@@ -912,12 +912,18 @@ button:active,
 /* ---------------------------------------------------- */
 
 @media (max-width: 768px) {
+  .yapster-app-layout {
+    height: 100vh !important;
+    height: 100dvh !important;
+  }
+
   .yapster-sidebar {
     width: 100% !important;
   }
   
   .yapster-chat-main {
     width: 100% !important;
+    height: 100% !important;
   }
 
   .mobile-sidebar-active .yapster-sidebar {
@@ -937,6 +943,16 @@ button:active,
     flex-direction: column !important;
   }
 
+  /* Optimized Mobile Header */
+  .chat-window-header-wrapper {
+    height: 70px !important;
+    padding: 0 16px !important;
+  }
+
+  .chat-content-pane {
+    height: calc(100% - 70px) !important;
+  }
+
   .chat-window-header-wrapper .btn-back-to-list {
     display: flex;
     align-items: center;
@@ -953,17 +969,56 @@ button:active,
     color: var(--muted);
   }
 
-  .str-chat__message-input,
+  .custom-channel-header-info {
+    gap: 3px !important;
+  }
+
+  .custom-channel-header-info h3 {
+    font-size: 13.5px !important;
+    line-height: 1.2 !important;
+  }
+
+  .room-code-badge {
+    font-size: 9.5px !important;
+    padding: 1px 6px !important;
+  }
+
+  /* Responsive Message List and Bubbles */
+  .str-chat__list {
+    padding: 8px 10px !important;
+  }
+
+  .str-chat__message-simple {
+    padding: 6px 12px !important;
+  }
+
+  .str-chat__message-simple-text-inner {
+    font-size: 13px !important;
+    padding: 8px 12px !important;
+  }
+
+  /* Optimized Mobile Input area avoiding keyboard cut-offs */
+  .str-chat__message-input {
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px)) !important;
+    background-color: var(--background) !important;
+  }
+
   .str-chat__message-composer {
-    padding: 12px 16px !important;
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  .str-chat__message-input-form {
+    border-radius: 8px !important;
+    margin: 0 !important;
   }
   
   .yapster-members-sidebar {
     position: fixed;
-    top: 60px;
+    top: 70px;
     right: 0;
     bottom: 0;
-    height: calc(100vh - 60px);
+    height: calc(100vh - 70px);
+    height: calc(100dvh - 70px);
     width: 250px;
     box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
   }

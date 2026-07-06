@@ -25,7 +25,7 @@ export async function POST(request: Request) {
 
     // Query Stream Chat to check if the channel exists
     const channels = await serverClient.queryChannels({
-      type: 'messaging',
+      type: 'livestream',
       id: channelId,
     });
 
