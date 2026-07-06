@@ -1406,35 +1406,100 @@ button:active,
   padding: 16px 20px !important;
 }
 
+/* Outer layout wrapper of the composer */
+.str-chat .str-chat__message-composer {
+  background: transparent !important;
+  border: none !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+/* Circular attachment plus button styling */
+.str-chat .str-chat__attachment-selector, 
+.str-chat .str-chat__attachment-selector button,
+.str-chat .str-chat__attachment-selector__menu-button {
+  background-color: rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 50% !important;
+  width: 36px !important;
+  height: 36px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  color: var(--muted) !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15) !important;
+}
+
+.str-chat .str-chat__attachment-selector:hover,
+.str-chat .str-chat__attachment-selector button:hover,
+.str-chat .str-chat__attachment-selector__menu-button:hover {
+  background-color: rgba(99, 102, 241, 0.08) !important;
+  border-color: rgba(99, 102, 241, 0.4) !important;
+  color: var(--foreground) !important;
+  transform: scale(1.06) rotate(90deg) !important;
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.15);
+}
+
+/* Modern Rounded Pill Input Console */
+.str-chat .str-chat__message-composer-compose-area,
 .str-chat__message-input-form {
+  flex-grow: 1 !important;
   border: 1px solid rgba(255, 255, 255, 0.06) !important;
   background-color: rgba(10, 10, 12, 0.45) !important;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-radius: 12px !important;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
-  transition: border-color 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border-radius: 9999px !important;
+  padding: 4px 18px !important;
+  display: flex !important;
+  align-items: center !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+  transition: border-color 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.3s ease !important;
 }
 
+.str-chat .str-chat__message-composer-compose-area:focus-within,
 .str-chat__message-input-form:focus-within {
+  background-color: rgba(10, 10, 12, 0.6) !important;
   border-color: rgba(99, 102, 241, 0.45) !important;
-  box-shadow: 0 10px 30px rgba(99, 102, 241, 0.1), 0 0 0 3px rgba(99, 102, 241, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+  box-shadow: 0 10px 30px rgba(99, 102, 241, 0.12), 0 0 0 3px rgba(99, 102, 241, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
 }
 
+.str-chat .str-chat__textarea,
+.str-chat .str-chat__textarea textarea,
 .str-chat__message-input-textarea {
   background: transparent !important;
   color: var(--foreground) !important;
+  border: none !important;
+  outline: none !important;
   font-size: 13.5px !important;
   line-height: 1.5 !important;
-  padding: 14px 16px !important;
+  padding: 8px 0 !important;
+  resize: none !important;
+  box-shadow: none !important;
 }
 
-.str-chat__send-button {
+.str-chat .str-chat__message-composer-controls {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+.str-chat .str-chat__send-button {
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 6px !important;
+  border-radius: 50% !important;
   color: var(--muted) !important;
-  transition: color 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  transition: color 0.25s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-.str-chat__send-button:hover {
+.str-chat .str-chat__send-button:hover {
   color: var(--brand-primary) !important;
-  transform: scale(1.08) translateZ(4px);
+  transform: scale(1.1) translateZ(4px) !important;
 }
