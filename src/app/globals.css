@@ -1445,6 +1445,11 @@ button:active,
   border-radius: 50% !important;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3), 0 0 0 2px rgba(255, 255, 255, 0.04) !important;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  width: 36px !important;
+  height: 36px !important;
+  max-width: 36px !important;
+  max-height: 36px !important;
+  flex-shrink: 0 !important;
 }
 
 .str-chat__channel-list-item:hover .str-chat__avatar,
@@ -1634,6 +1639,16 @@ button:active,
 .custom-avatar-container {
   display: inline-block;
   position: relative;
+  width: var(--avatar-size, 36px) !important;
+  height: var(--avatar-size, 36px) !important;
+}
+
+.custom-avatar-container img,
+.custom-avatar-container .str-chat__avatar-image {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
 }
 
 /* Global Avatar Presence Dot styling */

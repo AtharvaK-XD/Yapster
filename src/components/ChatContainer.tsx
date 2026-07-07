@@ -77,14 +77,25 @@ const CustomAvatar = (props: any) => {
   const isOnline = user?.online;
   const seed = encodeURIComponent(user?.id || name || 'yapster');
   const avatarUrl = image || `https://api.dicebear.com/7.x/bottts/svg?seed=${seed}`;
+  
+  // Set a safe fallback size (e.g., 36px) if none is provided by the parent list view container
+  const finalSize = size || 36;
 
   return (
-    <div className="custom-avatar-container" style={{ width: size, height: size, position: 'relative' }}>
+    <div 
+      className="str-chat__avatar str-chat__avatar--circle custom-avatar-container" 
+      style={{ 
+        width: `${finalSize}px`, 
+        height: `${finalSize}px`, 
+        position: 'relative',
+        ['--avatar-size' as any]: `${finalSize}px`
+      }}
+    >
       <img
         src={avatarUrl}
         alt={name || ''}
         className="str-chat__avatar-image"
-        style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover' }}
+        style={{ width: `${finalSize}px`, height: `${finalSize}px`, borderRadius: '50%', objectFit: 'cover' }}
       />
       {user && (
         <span className={`presence-dot ${isOnline ? 'online' : 'offline'}`} />
