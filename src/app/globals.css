@@ -306,21 +306,26 @@ button:active,
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background-color: var(--background);
+  background-color: #090a0d; /* custom deep space dark background */
+  padding: 16px;
+  gap: 16px;
 }
 
 /* Sidebar styling with Glassmorphism */
 .yapster-sidebar {
   display: flex;
   flex-direction: column;
-  width: 290px;
+  width: 340px; /* wider sidebar */
   height: 100%;
-  background: var(--card);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-right: 1px solid var(--border);
+  background: rgba(18, 18, 20, 0.45) !important;
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.05) !important;
   flex-shrink: 0;
   z-index: 10;
+  overflow: hidden;
 }
 
 .yapster-sidebar-header {
@@ -514,7 +519,13 @@ button:active,
 .yapster-chat-main {
   flex-grow: 1;
   height: 100%;
-  background: var(--background);
+  background: rgba(18, 18, 20, 0.35) !important;
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.05) !important;
+  overflow: hidden;
 }
 
 /* ---------------------------------------------------- */
@@ -1087,15 +1098,25 @@ button:active,
   .yapster-app-layout {
     height: 100vh !important;
     height: 100dvh !important;
+    padding: 0 !important;
+    gap: 0 !important;
   }
 
   .yapster-sidebar {
     width: 100% !important;
+    border-radius: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: var(--card) !important;
   }
   
   .yapster-chat-main {
     width: 100% !important;
     height: 100% !important;
+    border-radius: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: var(--background) !important;
   }
 
   .mobile-sidebar-active .yapster-sidebar {
