@@ -256,14 +256,31 @@ export default function ChatContainer({
     // Check if user has an initial Google PFP we can show as option
     const originalPic = sessionStorage.getItem('yapster-user-picture') || '';
     const hasOriginalPhoto = originalPic && originalPic.startsWith('http') && !originalPic.includes('dicebear');
+    const isEditing = sessionStorage.getItem('yapster-profile-setup-completed') === 'true';
 
-    const handleProfileSubmit = (e: React.FormEvent) => {
+    const handleProfileSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
       if (!displayName.trim() || displayName.length < 2) return;
 
       sessionStorage.setItem('yapster-user-name', displayName.trim());
       sessionStorage.setItem('yapster-user-picture', userAvatar);
       sessionStorage.setItem('yapster-profile-setup-completed', 'true');
+
+      // Sync changes to Stream Chat server instantly if already connected
+      const client = StreamChat.getInstance(apiKey);
+      if (client.userID) {
+        try {
+          await client.updateUser({
+            id: userId,
+            name: displayName.trim(),
+            image: userAvatar,
+          });
+          console.log('User profile updated successfully in Stream Chat');
+        } catch (err) {
+          console.error('Error updating user profile in Stream:', err);
+        }
+      }
+
       setIsOnboarded(true);
     };
 
@@ -271,7 +288,7 @@ export default function ChatContainer({
       <div className="onboarding-screen">
         <div className="onboarding-card">
           <div className="onboarding-header">
-            <h1>Personalize Your Yapster Profile</h1>
+            <h1>{isEditing ? 'Edit Your Yapster Profile' : 'Personalize Your Yapster Profile'}</h1>
             <p>Choose how other users will see you in chat rooms</p>
           </div>
 
@@ -337,13 +354,32 @@ export default function ChatContainer({
               </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={!displayName.trim() || displayName.length < 2 || !userAvatar}
-              className="btn-onboarding-submit"
-            >
-              Enter Yapster
-            </button>
+            <div className="onboarding-actions" style={{ display: 'flex', gap: '12px', width: '100%' }}>
+              {isEditing && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const savedName = sessionStorage.getItem('yapster-user-name') || userName;
+                    const savedPicture = sessionStorage.getItem('yapster-user-picture') || '';
+                    setDisplayName(savedName);
+                    setUserAvatar(savedPicture);
+                    setIsOnboarded(true);
+                  }}
+                  className="btn-secondary"
+                  style={{ flex: 1, padding: '16px', borderRadius: '12px', fontSize: '15px' }}
+                >
+                  Cancel
+                </button>
+              )}
+              <button
+                type="submit"
+                disabled={!displayName.trim() || displayName.length < 2 || !userAvatar}
+                className="btn-onboarding-submit"
+                style={{ flex: isEditing ? 2 : 1 }}
+              >
+                {isEditing ? 'Save Changes' : 'Enter Yapster'}
+              </button>
+            </div>
           </form>
         </div>
       </div>
@@ -385,13 +421,25 @@ export default function ChatContainer({
         Avatar: CustomAvatar,
         MessageStatus: CustomMessageStatus
       }}>
-        <ChatLayout onLogout={handleLogout} userId={userId} />
+        <ChatLayout 
+          onLogout={handleLogout} 
+          userId={userId} 
+          onChangeProfile={() => setIsOnboarded(false)}
+        />
       </WithComponents>
     </Chat>
   );
 }
 
-function ChatLayout({ onLogout, userId }: { onLogout: () => void; userId: string }) {
+function ChatLayout({ 
+  onLogout, 
+  userId, 
+  onChangeProfile 
+}: { 
+  onLogout: () => void; 
+  userId: string; 
+  onChangeProfile: () => void; 
+}) {
   const { client, channel, setActiveChannel } = useChatContext();
 
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -552,10 +600,17 @@ function ChatLayout({ onLogout, userId }: { onLogout: () => void; userId: string
             src={client.user?.image || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(client.userID || '')}`} 
             alt={client.user?.name}
             className="user-avatar"
+            onClick={onChangeProfile}
+            title="Change Name & Avatar"
           />
-          <div className="user-details">
+          <div 
+            className="user-details" 
+            onClick={onChangeProfile} 
+            style={{ cursor: 'pointer' }}
+            title="Change Name & Avatar"
+          >
             <span className="user-name-text">{client.user?.name || client.userID}</span>
-            <span className="user-status-text">online</span>
+            <span className="user-status-text">online (Click to edit)</span>
           </div>
           <button className="btn-logout-small" onClick={onLogout} title="Sign Out">
             🚪
