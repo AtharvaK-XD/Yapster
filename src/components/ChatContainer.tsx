@@ -19,6 +19,7 @@ import {
 } from 'stream-chat-react';
 
 import 'stream-chat-react/dist/css/index.css';
+import { ANIMAL_AVATARS } from './AnimalAvatars';
 
 interface ChatContainerProps {
   userId: string;
@@ -155,8 +156,36 @@ export default function ChatContainer({
 }: ChatContainerProps) {
   const [chatClient, setChatClient] = useState<StreamChat | null>(null);
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [isOnboarded, setIsOnboarded] = useState<boolean | null>(null);
+  
+  // Custom display name and avatar states for connecting
+  const [displayName, setDisplayName] = useState(userName);
+  const [userAvatar, setUserAvatar] = useState('');
 
+  // 1. Check if profile setup is already completed
   useEffect(() => {
+    const setupCompleted = sessionStorage.getItem('yapster-profile-setup-completed') === 'true';
+    if (setupCompleted) {
+      const savedName = sessionStorage.getItem('yapster-user-name') || userName;
+      const savedPicture = sessionStorage.getItem('yapster-user-picture') || '';
+      setDisplayName(savedName);
+      setUserAvatar(savedPicture);
+      setIsOnboarded(true);
+    } else {
+      setIsOnboarded(false);
+      // Pre-fill display name state from Google/Mock details
+      const currentName = sessionStorage.getItem('yapster-user-name') || userName;
+      setDisplayName(currentName);
+      
+      const currentPic = sessionStorage.getItem('yapster-user-picture') || '';
+      setUserAvatar(currentPic);
+    }
+  }, [userName]);
+
+  // 2. Connect user when onboarding is completed
+  useEffect(() => {
+    if (isOnboarded !== true) return;
+
     const client = StreamChat.getInstance(apiKey);
     let isSubscribed = true;
 
@@ -170,14 +199,15 @@ export default function ChatContainer({
 
     const initChat = async () => {
       try {
-        const savedPicture = sessionStorage.getItem('yapster-user-picture');
+        const finalName = sessionStorage.getItem('yapster-user-name') || displayName;
+        const finalPicture = sessionStorage.getItem('yapster-user-picture') || userAvatar;
 
         // Connect the user to Stream Chat
         await client.connectUser(
           {
             id: userId,
-            name: userName,
-            image: savedPicture || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(userId)}`,
+            name: finalName,
+            image: finalPicture || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(userId)}`,
           },
           token
         );
@@ -200,7 +230,7 @@ export default function ChatContainer({
     return () => {
       isSubscribed = false;
     };
-  }, [userId, userName, token, apiKey]);
+  }, [userId, token, apiKey, isOnboarded]);
 
   const handleLogout = async () => {
     try {
@@ -212,6 +242,113 @@ export default function ChatContainer({
     }
     onLogout();
   };
+
+  if (isOnboarded === null) {
+    return (
+      <div className="loading-screen">
+        <div className="spinner"></div>
+        <p>Initializing Yapster session...</p>
+      </div>
+    );
+  }
+
+  if (!isOnboarded) {
+    // Check if user has an initial Google PFP we can show as option
+    const originalPic = sessionStorage.getItem('yapster-user-picture') || '';
+    const hasOriginalPhoto = originalPic && originalPic.startsWith('http') && !originalPic.includes('dicebear');
+
+    const handleProfileSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!displayName.trim() || displayName.length < 2) return;
+
+      sessionStorage.setItem('yapster-user-name', displayName.trim());
+      sessionStorage.setItem('yapster-user-picture', userAvatar);
+      sessionStorage.setItem('yapster-profile-setup-completed', 'true');
+      setIsOnboarded(true);
+    };
+
+    return (
+      <div className="onboarding-screen">
+        <div className="onboarding-card">
+          <div className="onboarding-header">
+            <h1>Personalize Your Yapster Profile</h1>
+            <p>Choose how other users will see you in chat rooms</p>
+          </div>
+
+          <form onSubmit={handleProfileSubmit} className="onboarding-form">
+            <div className="form-group">
+              <label className="form-label" htmlFor="displayName">Display Name</label>
+              <div className="form-input-wrapper">
+                <input
+                  id="displayName"
+                  type="text"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value.slice(0, 20))}
+                  placeholder="Enter display name..."
+                  className="onboarding-input"
+                  required
+                  minLength={2}
+                  maxLength={20}
+                />
+              </div>
+            </div>
+
+            <div className="avatar-selection-section">
+              <label className="form-label">Choose Your Avatar</label>
+              <div className="avatar-grid">
+                {hasOriginalPhoto && (
+                  <div
+                    onClick={() => setUserAvatar(originalPic)}
+                    className={`avatar-option-card ${userAvatar === originalPic ? 'selected' : ''}`}
+                  >
+                    <div className="avatar-preview-wrap">
+                      <img
+                        src={originalPic}
+                        alt="Google profile"
+                        style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+                      />
+                    </div>
+                    <span className="avatar-option-name">Google Photo</span>
+                    {userAvatar === originalPic && (
+                      <span className="selected-badge">✓</span>
+                    )}
+                  </div>
+                )}
+
+                {ANIMAL_AVATARS.map((animal) => {
+                  // Turn SVG template string into base64 Data URI
+                  const dataUri = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(animal.svg)))}`;
+                  const isSelected = userAvatar === dataUri;
+
+                  return (
+                    <div
+                      key={animal.id}
+                      onClick={() => setUserAvatar(dataUri)}
+                      className={`avatar-option-card ${isSelected ? 'selected' : ''}`}
+                    >
+                      <div className="avatar-preview-wrap" dangerouslySetInnerHTML={{ __html: animal.svg }} />
+                      <span className="avatar-option-name">{animal.name}</span>
+                      {isSelected && (
+                        <span className="selected-badge">✓</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={!displayName.trim() || displayName.length < 2 || !userAvatar}
+              className="btn-onboarding-submit"
+            >
+              Enter Yapster
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   if (connectionError) {
     return (
