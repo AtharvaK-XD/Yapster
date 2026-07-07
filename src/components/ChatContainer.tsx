@@ -97,6 +97,8 @@ const CustomMessageStatus = (props: any) => {
   const { message, readBy } = props;
   const { client } = useChatContext();
 
+  if (!message) return null;
+
   const isMyMessage = message.user?.id === client?.userID;
   if (!isMyMessage) return null;
 
