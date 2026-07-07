@@ -72,6 +72,67 @@ const CustomMessageActions = (props: any) => {
   );
 };
 
+const CustomAvatar = (props: any) => {
+  const { image, name, user, size } = props;
+  const isOnline = user?.online;
+  const seed = encodeURIComponent(user?.id || name || 'yapster');
+  const avatarUrl = image || `https://api.dicebear.com/7.x/bottts/svg?seed=${seed}`;
+
+  return (
+    <div className="custom-avatar-container" style={{ width: size, height: size, position: 'relative' }}>
+      <img
+        src={avatarUrl}
+        alt={name || ''}
+        className="str-chat__avatar-image"
+        style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover' }}
+      />
+      {user && (
+        <span className={`presence-dot ${isOnline ? 'online' : 'offline'}`} />
+      )}
+    </div>
+  );
+};
+
+const CustomMessageStatus = (props: any) => {
+  const { message, readBy } = props;
+  const { client } = useChatContext();
+
+  const isMyMessage = message.user?.id === client?.userID;
+  if (!isMyMessage) return null;
+
+  if (message.status === 'sending') {
+    return (
+      <span className="msg-status-tick sending" title="Sending...">
+        ⚡
+      </span>
+    );
+  }
+
+  if (message.status === 'failed') {
+    return (
+      <span className="msg-status-tick failed" title="Failed to send">
+        ⚠️
+      </span>
+    );
+  }
+
+  const isRead = readBy && readBy.length > 0;
+
+  if (isRead) {
+    return (
+      <span className="msg-status-tick read" title="Read by recipient">
+        ✓✓
+      </span>
+    );
+  }
+
+  return (
+    <span className="msg-status-tick delivered" title="Delivered">
+      ✓✓
+    </span>
+  );
+};
+
 export default function ChatContainer({
   userId,
   userName,
@@ -169,7 +230,13 @@ export default function ChatContainer({
 
   return (
     <Chat client={chatClient} theme="str-chat__theme-dark">
-      <ChatLayout onLogout={handleLogout} userId={userId} />
+      <WithComponents overrides={{
+        MessageActions: CustomMessageActions,
+        Avatar: CustomAvatar,
+        MessageStatus: CustomMessageStatus
+      }}>
+        <ChatLayout onLogout={handleLogout} userId={userId} />
+      </WithComponents>
     </Chat>
   );
 }
@@ -369,8 +436,7 @@ function ChatLayout({ onLogout, userId }: { onLogout: () => void; userId: string
       <main className="yapster-chat-main">
         {hasActiveChannel ? (
           <div className="yapster-chat-viewport">
-            <WithComponents overrides={{ MessageActions: CustomMessageActions }}>
-              <Channel>
+            <Channel>
                 <Window>
                 <div className="chat-window-header-wrapper">
                   <button 
@@ -416,11 +482,14 @@ function ChatLayout({ onLogout, userId }: { onLogout: () => void; userId: string
                           const isOwner = member.user.id === (channel.data as any)?.created_by_id;
                           return (
                             <div key={member.user.id} className="member-item">
-                              <img 
-                                src={member.user.image || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(member.user.id)}`} 
-                                alt={member.user.name} 
-                                className="member-avatar"
-                              />
+                              <div className="member-avatar-wrapper">
+                                <img 
+                                  src={member.user.image || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(member.user.id)}`} 
+                                  alt={member.user.name || member.user.id} 
+                                  className="member-avatar"
+                                />
+                                <span className={`presence-dot ${member.user.online ? 'online' : 'offline'}`} />
+                              </div>
                               <div className="member-info">
                                 <span className="member-name">{member.user.name || member.user.id}</span>
                                 {isOwner ? (
@@ -439,8 +508,7 @@ function ChatLayout({ onLogout, userId }: { onLogout: () => void; userId: string
               </Window>
               <Thread />
             </Channel>
-          </WithComponents>
-        </div>
+          </div>
         ) : (
           <div className="no-active-chat-screen">
             <div className="no-chat-prompt">

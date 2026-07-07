@@ -8,25 +8,6 @@ export default function Login() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const card = e.currentTarget;
-    const rect = card.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const xc = rect.width / 2;
-    const yc = rect.height / 2;
-    const tiltX = -(y - yc) / 16;
-    const tiltY = (x - xc) / 16;
-    
-    card.style.setProperty('--tilt-x', `${tiltX}deg`);
-    card.style.setProperty('--tilt-y', `${tiltY}deg`);
-  };
-
-  const handleMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
-    const card = e.currentTarget;
-    card.style.setProperty('--tilt-x', '0deg');
-    card.style.setProperty('--tilt-y', '0deg');
-  };
   const [errorMessage, setErrorMessage] = useState('');
   const [isConfigured, setIsConfigured] = useState(true);
 
@@ -110,11 +91,7 @@ export default function Login() {
 
   return (
     <div className="login-container">
-      <div 
-        className="login-card"
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-      >
+      <div className="login-card">
         <div className="login-header">
           <div className="logo-badge">
             <img src="/logo.png" alt="Yapster Logo" style={{ width: '32px', height: '32px', objectFit: 'contain' }} />

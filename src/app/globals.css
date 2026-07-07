@@ -163,9 +163,7 @@ button:active,
   border-radius: 16px;
   box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
   z-index: 1;
-  transform: rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
-  transform-style: preserve-3d;
-  transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .login-card:hover {
@@ -176,8 +174,6 @@ button:active,
 .login-header {
   text-align: center;
   margin-bottom: 32px;
-  transform: translateZ(30px);
-  transform-style: preserve-3d;
 }
 
 .logo-badge {
@@ -195,19 +191,18 @@ button:active,
   animation: float-badge 6s ease-in-out infinite;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  transform: translateZ(50px);
 }
 
 .logo-badge:hover {
-  transform: translateZ(65px) translateY(-4px) scale(1.05) rotate(4deg) !important;
+  transform: translateY(-4px) scale(1.05) rotate(4deg) !important;
   background: rgba(255, 255, 255, 0.05);
   border-color: rgba(255, 255, 255, 0.15);
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4), 0 0 15px rgba(255, 255, 255, 0.05);
 }
 
 @keyframes float-badge {
-  0%, 100% { transform: translateZ(50px) translateY(0) rotate(0deg); }
-  50% { transform: translateZ(60px) translateY(-5px) rotate(2deg); }
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-5px) rotate(2deg); }
 }
 
 .login-header h1 {
@@ -216,13 +211,11 @@ button:active,
   letter-spacing: -0.5px;
   margin-bottom: 8px;
   color: var(--foreground);
-  transform: translateZ(25px);
 }
 
 .login-header p {
   font-size: 13.5px;
   color: var(--muted);
-  transform: translateZ(15px);
 }
 
 .login-oauth-section {
@@ -231,8 +224,6 @@ button:active,
   align-items: center;
   gap: 16px;
   margin-top: 16px;
-  transform: translateZ(30px);
-  transform-style: preserve-3d;
 }
 
 .google-btn-wrapper {
@@ -1634,4 +1625,111 @@ button:active,
 .str-chat .str-chat__send-button:hover {
   color: var(--brand-primary) !important;
   transform: scale(1.1) translateZ(4px) !important;
+}
+
+/* ---------------------------------------------------- */
+/* REAL-TIME PRESENCE & READ RECEIPTS STATUS OVERRIDES */
+/* ---------------------------------------------------- */
+
+.custom-avatar-container {
+  display: inline-block;
+  position: relative;
+}
+
+/* Global Avatar Presence Dot styling */
+.custom-avatar-container .presence-dot,
+.member-avatar-wrapper .presence-dot {
+  position: absolute !important;
+  bottom: -1px !important;
+  right: -1px !important;
+  width: 9px !important;
+  height: 9px !important;
+  border-radius: 50% !important;
+  border: 1.5px solid #0a0a0c !important; /* Match layout backdrop */
+  z-index: 10 !important;
+}
+
+.custom-avatar-container .presence-dot.online,
+.member-avatar-wrapper .presence-dot.online {
+  background-color: #10b981 !important;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.6) !important;
+  animation: pulse-presence 2s infinite alternate !important;
+}
+
+.custom-avatar-container .presence-dot.offline,
+.member-avatar-wrapper .presence-dot.offline {
+  background-color: #6b7280 !important;
+  box-shadow: none !important;
+}
+
+@keyframes pulse-presence {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 4px rgba(16, 185, 129, 0.4);
+  }
+  100% {
+    transform: scale(1.1);
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.8);
+  }
+}
+
+/* Group Members Sidebar Avatar Wrappers */
+.member-avatar-wrapper {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.member-avatar-wrapper .member-avatar {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Squished checkmarks read receipts */
+.str-chat__message-status {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-left: 6px !important;
+  vertical-align: middle !important;
+}
+
+.msg-status-tick {
+  font-family: system-ui, -apple-system, sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  user-select: none !important;
+  letter-spacing: -2px !important; /* Brings checks together to look like a double-check */
+  margin-right: 4px !important;
+  display: inline-block !important;
+}
+
+.msg-status-tick.delivered {
+  color: var(--muted) !important;
+  opacity: 0.5;
+}
+
+.msg-status-tick.read {
+  color: #6366f1 !important; /* Glowing indigo checks */
+  text-shadow: 0 0 8px rgba(99, 102, 241, 0.5) !important;
+}
+
+.msg-status-tick.sending {
+  font-size: 9px !important;
+  color: var(--muted) !important;
+  animation: pulse-sending 0.8s infinite alternate;
+}
+
+.msg-status-tick.failed {
+  color: #ef4444 !important;
+}
+
+@keyframes pulse-sending {
+  from { opacity: 0.3; }
+  to { opacity: 0.9; }
 }
