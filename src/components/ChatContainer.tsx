@@ -416,17 +416,11 @@ export default function ChatContainer({
 
   return (
     <Chat client={chatClient} theme="str-chat__theme-dark">
-      <WithComponents overrides={{
-        MessageActions: CustomMessageActions,
-        Avatar: CustomAvatar,
-        MessageStatus: CustomMessageStatus
-      }}>
-        <ChatLayout 
-          onLogout={handleLogout} 
-          userId={userId} 
-          onChangeProfile={() => setIsOnboarded(false)}
-        />
-      </WithComponents>
+      <ChatLayout 
+        onLogout={handleLogout} 
+        userId={userId} 
+        onChangeProfile={() => setIsOnboarded(false)}
+      />
     </Chat>
   );
 }
@@ -641,78 +635,84 @@ function ChatLayout({
       <main className="yapster-chat-main">
         {hasActiveChannel ? (
           <div className="yapster-chat-viewport">
-            <Channel>
+            <WithComponents overrides={{
+              MessageActions: CustomMessageActions,
+              Avatar: CustomAvatar,
+              MessageStatus: CustomMessageStatus
+            }}>
+              <Channel>
                 <Window>
-                <div className="chat-window-header-wrapper">
-                  <button 
-                    className="btn-back-to-list" 
-                    onClick={handleBackToList} 
-                    title="Back to Channels"
-                  >
-                    ←
-                  </button>
-                  <div className="custom-channel-header-info">
-                    <h3>{(channel.data as any)?.name || 'Chat Room'}</h3>
-                    <span 
-                      className="room-code-badge" 
-                      onClick={() => handleCopyCode((channel.data as any)?.room_code || channel.id?.toUpperCase() || '')}
-                      title="Click to copy room code"
+                  <div className="chat-window-header-wrapper">
+                    <button 
+                      className="btn-back-to-list" 
+                      onClick={handleBackToList} 
+                      title="Back to Channels"
                     >
-                      Code: {(channel.data as any)?.room_code || channel.id?.toUpperCase() || ''} 📋
-                    </span>
+                      ←
+                    </button>
+                    <div className="custom-channel-header-info">
+                      <h3>{(channel.data as any)?.name || 'Chat Room'}</h3>
+                      <span 
+                        className="room-code-badge" 
+                        onClick={() => handleCopyCode((channel.data as any)?.room_code || channel.id?.toUpperCase() || '')}
+                        title="Click to copy room code"
+                      >
+                        Code: {(channel.data as any)?.room_code || channel.id?.toUpperCase() || ''} 📋
+                      </span>
+                    </div>
+                    <button 
+                      className={`btn-toggle-members ${showMembersList ? 'active' : ''}`}
+                      onClick={() => setShowMembersList(!showMembersList)}
+                      title="View members in group"
+                    >
+                      👥 {Object.keys(channel.state.members).length}
+                    </button>
                   </div>
-                  <button 
-                    className={`btn-toggle-members ${showMembersList ? 'active' : ''}`}
-                    onClick={() => setShowMembersList(!showMembersList)}
-                    title="View members in group"
-                  >
-                    👥 {Object.keys(channel.state.members).length}
-                  </button>
-                </div>
-                <div className="chat-content-pane">
-                  <div className="chat-messages-area">
-                    <MessageList />
-                    <MessageComposer />
+                  <div className="chat-content-pane">
+                    <div className="chat-messages-area">
+                      <MessageList />
+                      <MessageComposer />
+                    </div>
+                    
+                    {/* Toggleable Group Members sidebar */}
+                    {showMembersList && (
+                      <aside className="yapster-members-sidebar">
+                        <div className="members-sidebar-header">
+                          <h4>Group Members</h4>
+                          <button className="btn-close-members" onClick={() => setShowMembersList(false)}>×</button>
+                        </div>
+                        <div className="members-list">
+                          {Object.values(channel.state.members).map((member: any) => {
+                            const isOwner = member.user.id === (channel.data as any)?.created_by_id;
+                            return (
+                              <div key={member.user.id} className="member-item">
+                                <div className="member-avatar-wrapper">
+                                  <img 
+                                    src={member.user.image || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(member.user.id)}`} 
+                                    alt={member.user.name || member.user.id} 
+                                    className="member-avatar"
+                                  />
+                                  <span className={`presence-dot ${member.user.online ? 'online' : 'offline'}`} />
+                                </div>
+                                <div className="member-info">
+                                  <span className="member-name">{member.user.name || member.user.id}</span>
+                                  {isOwner ? (
+                                    <span className="badge-admin">Admin</span>
+                                  ) : (
+                                    <span className="badge-member">Member</span>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </aside>
+                    )}
                   </div>
-                  
-                  {/* Toggleable Group Members sidebar */}
-                  {showMembersList && (
-                    <aside className="yapster-members-sidebar">
-                      <div className="members-sidebar-header">
-                        <h4>Group Members</h4>
-                        <button className="btn-close-members" onClick={() => setShowMembersList(false)}>×</button>
-                      </div>
-                      <div className="members-list">
-                        {Object.values(channel.state.members).map((member: any) => {
-                          const isOwner = member.user.id === (channel.data as any)?.created_by_id;
-                          return (
-                            <div key={member.user.id} className="member-item">
-                              <div className="member-avatar-wrapper">
-                                <img 
-                                  src={member.user.image || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(member.user.id)}`} 
-                                  alt={member.user.name || member.user.id} 
-                                  className="member-avatar"
-                                />
-                                <span className={`presence-dot ${member.user.online ? 'online' : 'offline'}`} />
-                              </div>
-                              <div className="member-info">
-                                <span className="member-name">{member.user.name || member.user.id}</span>
-                                {isOwner ? (
-                                  <span className="badge-admin">Admin</span>
-                                ) : (
-                                  <span className="badge-member">Member</span>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </aside>
-                  )}
-                </div>
-              </Window>
-              <Thread />
-            </Channel>
+                </Window>
+                <Thread />
+              </Channel>
+            </WithComponents>
           </div>
         ) : (
           <div className="no-active-chat-screen">
