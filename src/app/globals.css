@@ -1679,6 +1679,26 @@ button:active,
   object-fit: cover !important;
 }
 
+/* Force small avatar sizes for message list items */
+.str-chat__message .str-chat__avatar,
+.str-chat__message-simple .str-chat__avatar,
+.str-chat__message-avatar,
+.str-chat__message-simple .custom-avatar-container {
+  width: 28px !important;
+  height: 28px !important;
+  max-width: 28px !important;
+  max-height: 28px !important;
+  flex-shrink: 0 !important;
+  --avatar-size: 28px !important;
+}
+
+.str-chat__message-simple .custom-avatar-container .presence-dot {
+  width: 7px !important;
+  height: 7px !important;
+  bottom: -1px !important;
+  right: -1px !important;
+}
+
 /* Global Avatar Presence Dot styling */
 .custom-avatar-container .presence-dot,
 .member-avatar-wrapper .presence-dot {

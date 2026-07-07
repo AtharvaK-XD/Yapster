@@ -77,7 +77,7 @@ const CustomAvatar = (props: any) => {
   const { image, name, user, size } = props;
   const isOnline = user?.online;
   const seed = encodeURIComponent(user?.id || name || 'yapster');
-  const avatarUrl = image || `https://api.dicebear.com/7.x/bottts/svg?seed=${seed}`;
+  const avatarUrl = image || user?.image || `https://api.dicebear.com/7.x/bottts/svg?seed=${seed}`;
   
   // Set a safe fallback size (e.g., 36px) if none is provided by the parent list view container
   const finalSize = size || 36;
@@ -439,6 +439,57 @@ function ChatLayout({
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [showMembersList, setShowMembersList] = useState(false);
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchStartY, setTouchStartY] = useState<number | null>(null);
+  const [touchEndX, setTouchEndX] = useState<number | null>(null);
+  const [touchEndY, setTouchEndY] = useState<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchEndX(null);
+    setTouchEndY(null);
+    setTouchStartX(e.targetTouches[0].clientX);
+    setTouchStartY(e.targetTouches[0].clientY);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEndX(e.targetTouches[0].clientX);
+    setTouchEndY(e.targetTouches[0].clientY);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStartX || !touchEndX || !touchStartY || !touchEndY) return;
+
+    const xDistance = touchStartX - touchEndX;
+    const yDistance = touchStartY - touchEndY;
+
+    // Primarily horizontal swipe: x-axis movement is larger than y-axis, and exceeds a threshold (60px)
+    if (Math.abs(xDistance) > Math.abs(yDistance) && Math.abs(xDistance) > 60) {
+      const isLeftSwipe = xDistance > 0;
+      const isRightSwipe = xDistance < 0;
+
+      if (isLeftSwipe) {
+        if (channel && !showMembersList) {
+          setShowMembersList(true);
+        } else if (!channel) {
+          // If we have channels list open, swipe left to load active/first channel
+          if (client.activeChannels) {
+            const channels = Object.values(client.activeChannels);
+            if (channels.length > 0) {
+              setActiveChannel(channels[0]);
+            }
+          }
+        }
+      }
+
+      if (isRightSwipe) {
+        if (showMembersList) {
+          setShowMembersList(false);
+        } else if (channel) {
+          handleBackToList();
+        }
+      }
+    }
+  };
   const [infoMessage, setInfoMessage] = useState<any | null>(null);
   
   const [newRoomName, setNewRoomName] = useState('');
@@ -579,7 +630,12 @@ function ChatLayout({
   const hasActiveChannel = !!channel;
 
   return (
-    <div className={`yapster-app-layout ${hasActiveChannel ? 'mobile-chat-active' : 'mobile-sidebar-active'}`}>
+    <div 
+      className={`yapster-app-layout ${hasActiveChannel ? 'mobile-chat-active' : 'mobile-sidebar-active'}`}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
       {/* Left Sidebar */}
       <aside className="yapster-sidebar">
         <div className="yapster-sidebar-header">
